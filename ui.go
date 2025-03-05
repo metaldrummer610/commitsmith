@@ -110,7 +110,13 @@ func NewModel() Model {
 					return title("What is the commit about at a high level?", descriptionLength-len(m.commit.Description))
 				}, &m.commit.Description).
 				CharLimit(descriptionLength).
-				Value(&m.commit.Description),
+				Value(&m.commit.Description).
+				Validate(func(s string) error {
+					if len(s) == 0 {
+						return fmt.Errorf("description cannot be empty")
+					}
+					return nil
+				}),
 
 			huh.NewText().
 				Key("body").

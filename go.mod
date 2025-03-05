@@ -7,6 +7,7 @@ require (
 	github.com/charmbracelet/huh v0.6.0
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/go-git/go-git/v5 v5.14.0
+	github.com/spf13/pflag v1.0.6
 )
 
 require (

@@ -61,8 +61,7 @@ func (g *Git) Status() error {
 	}
 
 	emptyWorktree := false
-	for f, s := range status {
-		fmt.Printf("File %s status %c\n", f, s.Staging)
+	for _, s := range status {
 		if s.Staging == git.Modified || s.Staging == git.Added {
 			emptyWorktree = true
 			break

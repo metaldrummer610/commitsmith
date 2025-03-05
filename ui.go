@@ -67,14 +67,19 @@ type Model struct {
 	commit *Commit
 }
 
-func NewModel() Model {
+func NewModel(msg *string) Model {
+	const descriptionLength = 60
+	const bodyLength = 1000
+
 	m := Model{width: maxWidth}
 	m.lg = lipgloss.DefaultRenderer()
 	m.styles = NewStyles(m.lg)
 	m.commit = &Commit{}
 
-	const descriptionLength = 60
-	const bodyLength = 1000
+	if msg != nil {
+		trunc := min(descriptionLength, len(*msg))
+		m.commit.Description = (*msg)[:trunc]
+	}
 
 	title := func(s string, i int) string {
 		return fmt.Sprintf("%s %d characters remaining", s, i)

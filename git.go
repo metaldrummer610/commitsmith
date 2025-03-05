@@ -32,47 +32,71 @@ func (c *Commit) Message() string {
 	return buf.String()
 }
 
-func (c *Commit) Commit() {
+type Git struct {
+	repo     *git.Repository
+	worktree *git.Worktree
+}
+
+func NewGit() (*Git, error) {
 	repo, err := git.PlainOpen(".")
 	if err != nil {
-		fmt.Println("Error opening repository:", err)
-		return
+		return nil, err
 	}
 
-	w, err := repo.Worktree()
+	worktree, err := repo.Worktree()
 	if err != nil {
-		fmt.Println("Error getting worktree:", err)
-		return
+		return nil, err
 	}
 
-	fmt.Println("Repository status before commit:")
-	status, err := w.Status()
+	return &Git{
+		repo:     repo,
+		worktree: worktree,
+	}, nil
+}
+
+func (g *Git) Status() error {
+	status, err := g.worktree.Status()
 	if err != nil {
 		fmt.Println("Error getting status:", err)
 	}
-	fmt.Println(status)
 
+	emptyWorktree := false
+	for f, s := range status {
+		fmt.Printf("File %s status %c\n", f, s.Staging)
+		if s.Staging == git.Modified || s.Staging == git.Added {
+			emptyWorktree = true
+			break
+		}
+	}
+
+	if !emptyWorktree {
+		return fmt.Errorf("repository contains unstaged changes. Please stage or discard them before committing")
+	}
+
+	return nil
+}
+
+func (g *Git) Commit(c *Commit) {
 	confirm := false
-	if err = huh.NewConfirm().Title("Commit?").Affirmative("Yes").Negative("Cancel").Value(&confirm).Run(); err != nil {
+	if err := huh.NewConfirm().Title("Commit?").Affirmative("Yes").Negative("Cancel").Value(&confirm).Run(); err != nil {
 		return
 	}
 	if !confirm {
 		return
 	}
 
-	hash, err := w.Commit(c.Message(), &git.CommitOptions{})
+	hash, err := g.worktree.Commit(c.Message(), &git.CommitOptions{})
 	if err != nil {
-		fmt.Println("Error getting worktree:", err)
+		fmt.Println("Error during commit:", err)
 		return
 	}
 
-	println("Committed:")
-
-	obj, err := repo.CommitObject(hash)
+	obj, err := g.repo.CommitObject(hash)
 	if err != nil {
 		fmt.Println("Error getting commit object:", err)
 		return
 	}
 
+	fmt.Println("Committed:")
 	fmt.Println(obj)
 }
